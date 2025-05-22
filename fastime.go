@@ -22,15 +22,15 @@ type Time struct {
 	ft            atomic.Pointer[[]byte]        // Cached formatted time as a byte slice.
 	t             atomic.Pointer[time.Time]     // Cached time.Time object.
 	wg            sync.WaitGroup                // WaitGroup for managing the timer goroutine.
-	ut            int64                         // Cached Unix time in seconds.
-	correctionDur time.Duration                 // Interval for system time correction.
-	unt           int64                         // Cached Unix time in nanoseconds.
-	dur           int64                         // Refresh duration in nanoseconds for the timer goroutine.
+	ut            atomic.Int64                  // Cached Unix time in seconds.
+	correctionDur time.Duration                 // Interval for system time correction (in nanoseconds).
+	unt           atomic.Int64                  // Cached Unix time in nanoseconds.
+	dur           atomic.Int64                  // Refresh duration in nanoseconds for the timer goroutine.
 	mu            sync.Mutex                    // Mutex for controlling access to StartTimerD and Stop.
 	running       atomic.Bool                   // Flag indicating if the timer goroutine is running.
-	uut           uint32                        // Cached Unix time in seconds (uint32).
+	uut           atomic.Uint32                 // Cached Unix time in seconds (uint32).
 	formatValid   atomic.Bool                   // Flag indicating if the formatted time (ft) is valid.
-	uunt          uint32                        // Cached Unix time in nanoseconds (uint32).
+	uunt          atomic.Uint32                 // Cached Unix time in nanoseconds (uint32).
 }
 
 const (
@@ -42,13 +42,12 @@ const (
 // It sets the initial time, default format (time.RFC3339), and location.
 // The location is determined by the TZ environment variable if set, otherwise it defaults to UTC.
 func New() (f *Time) {
-	f = &Time{
-		ut:            math.MaxInt64,
-		unt:           math.MaxInt64,
-		uut:           math.MaxUint32,
-		uunt:          math.MaxUint32,
-		correctionDur: time.Millisecond * 100,
-	}
+	f = &Time{}
+	f.ut.Store(math.MaxInt64)
+	f.unt.Store(math.MaxInt64)
+	f.uut.Store(math.MaxUint32)
+	f.uunt.Store(math.MaxUint32)
+	f.correctionDur = time.Millisecond * 100
 
 	form := time.RFC3339
 	f.format.Store(&form)
@@ -76,7 +75,7 @@ func New() (f *Time) {
 }
 
 func (f *Time) update() (ft *Time) {
-	return f.store(f.Now().Add(time.Duration(atomic.LoadInt64(&f.dur))))
+	return f.store(f.Now().Add(time.Duration(f.dur.Load())))
 }
 
 func (f *Time) refresh() (ft *Time) {
@@ -101,10 +100,10 @@ func (f *Time) store(t time.Time) (ft *Time) {
 	ut := t.Unix()
 	unt := t.UnixNano()
 
-	atomic.StoreInt64(&f.ut, ut)
-	atomic.StoreInt64(&f.unt, unt)
-	atomic.StoreUint32(&f.uut, *(*uint32)(unsafe.Pointer(&ut)))
-	atomic.StoreUint32(&f.uunt, *(*uint32)(unsafe.Pointer(&unt)))
+	f.ut.Store(ut)
+	f.unt.Store(unt)
+	f.uut.Store(*(*uint32)(unsafe.Pointer(&ut)))
+	f.uunt.Store(*(*uint32)(unsafe.Pointer(&unt)))
 
 	return f
 }
@@ -170,7 +169,7 @@ func (f *Time) Stop() {
 
 func (f *Time) stop() {
 	if f.IsDaemonRunning() {
-		atomic.StoreInt64(&f.dur, 0)
+		f.dur.Store(0)
 	}
 
 	f.wg.Wait()
@@ -184,25 +183,25 @@ func (f *Time) Since(t time.Time) (dur time.Duration) {
 
 // UnixNow returns the cached current Unix time (seconds since January 1, 1970 UTC).
 func (f *Time) UnixNow() (now int64) {
-	return atomic.LoadInt64(&f.ut)
+	return f.ut.Load()
 }
 
 // UnixUNow returns the cached current Unix time as a uint32 (seconds since January 1, 1970 UTC).
 // Note: This will overflow in the year 2106.
 func (f *Time) UnixUNow() (now uint32) {
-	return atomic.LoadUint32(&f.uut)
+	return f.uut.Load()
 }
 
 // UnixNanoNow returns the cached current Unix time in nanoseconds.
 func (f *Time) UnixNanoNow() (now int64) {
-	return atomic.LoadInt64(&f.unt)
+	return f.unt.Load()
 }
 
 // UnixUNanoNow returns the cached current Unix time in nanoseconds as a uint32.
 // Note: This will overflow frequently (approximately every 4.29 seconds).
 // It is generally recommended to use UnixNanoNow for nanosecond precision.
 func (f *Time) UnixUNanoNow() (now uint32) {
-	return atomic.LoadUint32(&f.uunt)
+	return f.uunt.Load()
 }
 
 // FormattedNow returns the cached current time formatted as a byte slice
@@ -234,9 +233,9 @@ func (f *Time) StartTimerD(ctx context.Context, dur time.Duration) (ft *Time) {
 	}
 
 	f.running.Store(true)
-	f.dur = math.MaxInt64
-	atomic.StoreInt64(&f.dur, dur.Nanoseconds())
-	ticker := time.NewTicker(time.Duration(atomic.LoadInt64(&f.dur)))
+	f.dur.Store(math.MaxInt64)
+	f.dur.Store(dur.Nanoseconds())
+	ticker := time.NewTicker(time.Duration(f.dur.Load()))
 	lastCorrection := f.now()
 	f.wg.Add(1)
 	f.refresh()
@@ -249,7 +248,7 @@ func (f *Time) StartTimerD(ctx context.Context, dur time.Duration) (ft *Time) {
 			f.wg.Done()
 		}()
 
-		for atomic.LoadInt64(&f.dur) > 0 {
+		for f.dur.Load() > 0 {
 			tickTime := <-ticker.C
 			// rely on ticker for approximation
 			if tickTime.Sub(lastCorrection) < f.correctionDur {
