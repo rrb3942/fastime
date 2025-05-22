@@ -1,7 +1,6 @@
 package fastime
 
 import (
-	"context"
 	"math"
 	"reflect"
 	"testing"
@@ -108,14 +107,8 @@ func TestStartStop(t *testing.T) {
 }
 
 func TestFastime_Now(t *testing.T) {
-	type fields struct {
-		cancel context.CancelFunc
-	}
-
 	tests := []struct {
-		name   string
-		fields fields
-		want   time.Time
+		name string
 	}{
 		{
 			name: "time equality",
@@ -132,13 +125,8 @@ func TestFastime_Now(t *testing.T) {
 }
 
 func TestFastime_Stop(t *testing.T) {
-	type fields struct {
-		cancel context.CancelFunc
-	}
-
 	tests := []struct {
-		name   string
-		fields fields
+		name string
 	}{
 		{
 			name: "check stop",
