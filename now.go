@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+// now returns the current time. This is the POSIX-specific implementation
+// using syscall.Gettimeofday for potentially higher precision.
+// It falls back to time.Now() if syscall.Gettimeofday fails.
+// The returned time is in the location set for the Time instance.
 func (f *Time) now() (now time.Time) {
 	var timeValue syscall.Timeval
 	err := syscall.Gettimeofday(&timeValue)
