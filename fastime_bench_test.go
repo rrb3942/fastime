@@ -11,7 +11,7 @@ func BenchmarkFastime(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			Now()
+			_ = Now()
 		}
 	})
 }
@@ -22,7 +22,7 @@ func BenchmarkTime(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			time.Now()
+			_ = time.Now()
 		}
 	})
 }
@@ -32,7 +32,7 @@ func BenchmarkFastimeNow(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			Default.now()
+			_ = Default.now()
 		}
 	})
 }
