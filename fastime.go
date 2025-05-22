@@ -1,3 +1,6 @@
+// Package fastime is a low-overhead, high-performance time package that caches time.
+// It is designed to be a faster alternative to time.Now() for applications
+// that require frequent time lookups.
 package fastime
 
 import (
@@ -10,29 +13,34 @@ import (
 	"unsafe"
 )
 
-// *Time is Time's base struct, it's stores atomic time object.
+// Time is the core struct of the fastime package. It stores and manages
+// the cached time, location, and format string. It uses atomic operations
+// for thread-safe access to its fields.
 type Time struct {
-	location      atomic.Pointer[time.Location]
-	format        atomic.Pointer[string]
-	ft            atomic.Pointer[[]byte]
-	t             atomic.Pointer[time.Time]
-	wg            sync.WaitGroup
-	ut            int64
-	correctionDur time.Duration
-	unt           int64
-	dur           int64
-	mu            sync.Mutex
-	running       atomic.Bool
-	uut           uint32
-	formatValid   atomic.Bool
-	uunt          uint32
+	location      atomic.Pointer[time.Location] // Current time zone location.
+	format        atomic.Pointer[string]        // Current time format string.
+	ft            atomic.Pointer[[]byte]        // Cached formatted time as a byte slice.
+	t             atomic.Pointer[time.Time]     // Cached time.Time object.
+	wg            sync.WaitGroup                // WaitGroup for managing the timer goroutine.
+	ut            int64                         // Cached Unix time in seconds.
+	correctionDur time.Duration                 // Interval for system time correction.
+	unt           int64                         // Cached Unix time in nanoseconds.
+	dur           int64                         // Refresh duration in nanoseconds for the timer goroutine.
+	mu            sync.Mutex                    // Mutex for controlling access to StartTimerD and Stop.
+	running       atomic.Bool                   // Flag indicating if the timer goroutine is running.
+	uut           uint32                        // Cached Unix time in seconds (uint32).
+	formatValid   atomic.Bool                   // Flag indicating if the formatted time (ft) is valid.
+	uunt          uint32                        // Cached Unix time in nanoseconds (uint32).
 }
 
 const (
-	bufSize   = 64
-	bufMargin = 10
+	bufSize   = 64 // Default buffer size for formatted time.
+	bufMargin = 10 // Margin for buffer size calculation.
 )
 
+// New creates and initializes a new Time instance.
+// It sets the initial time, default format (time.RFC3339), and location.
+// The location is determined by the TZ environment variable if set, otherwise it defaults to UTC.
 func New() (f *Time) {
 	f = &Time{
 		ut:            math.MaxInt64,
@@ -101,10 +109,13 @@ func (f *Time) store(t time.Time) (ft *Time) {
 	return f
 }
 
+// IsDaemonRunning reports whether the background refresh daemon is running.
 func (f *Time) IsDaemonRunning() (running bool) {
 	return f.running.Load()
 }
 
+// GetLocation returns the current time.Location used by the Time instance.
+// It returns nil if the location is not properly initialized (e.g. TZ env var points to a non-existent location).
 func (f *Time) GetLocation() (loc *time.Location) {
 	loc = f.location.Load()
 	if loc == nil {
@@ -114,11 +125,14 @@ func (f *Time) GetLocation() (loc *time.Location) {
 	return loc
 }
 
+// GetFormat returns the current format string used for FormattedNow.
 func (f *Time) GetFormat() (form string) {
 	return *f.format.Load()
 }
 
-// SetLocation replaces time location.
+// SetLocation updates the time location for the Time instance.
+// If loc is nil, the current location remains unchanged.
+// After setting the location, the cached time is refreshed.
 func (f *Time) SetLocation(loc *time.Location) (ft *Time) {
 	if loc == nil {
 		return f
@@ -130,7 +144,9 @@ func (f *Time) SetLocation(loc *time.Location) (ft *Time) {
 	return f
 }
 
-// SetFormat replaces time format.
+// SetFormat updates the time format string for the Time instance.
+// After setting the format, the cached time is refreshed and the
+// formatted time cache is invalidated.
 func (f *Time) SetFormat(format string) (ft *Time) {
 	f.format.Store(&format)
 	f.formatValid.Store(false)
@@ -139,12 +155,13 @@ func (f *Time) SetFormat(format string) (ft *Time) {
 	return f
 }
 
-// Now returns current time.
+// Now returns the cached current time.
 func (f *Time) Now() (t time.Time) {
 	return *f.t.Load()
 }
 
-// Stop stops stopping time refresh daemon.
+// Stop halts the background time refresh daemon if it is running.
+// It waits for the daemon goroutine to exit before returning.
 func (f *Time) Stop() {
 	f.mu.Lock()
 	f.stop()
@@ -159,31 +176,38 @@ func (f *Time) stop() {
 	f.wg.Wait()
 }
 
+// Since returns the time elapsed since t.
+// It is shorthand for f.Now().Sub(t).
 func (f *Time) Since(t time.Time) (dur time.Duration) {
 	return f.Now().Sub(t)
 }
 
-// UnixNow returns current unix time.
+// UnixNow returns the cached current Unix time (seconds since January 1, 1970 UTC).
 func (f *Time) UnixNow() (now int64) {
 	return atomic.LoadInt64(&f.ut)
 }
 
-// UnixNow returns current unix time.
+// UnixUNow returns the cached current Unix time as a uint32 (seconds since January 1, 1970 UTC).
+// Note: This will overflow in the year 2106.
 func (f *Time) UnixUNow() (now uint32) {
 	return atomic.LoadUint32(&f.uut)
 }
 
-// UnixNanoNow returns current unix nano time.
+// UnixNanoNow returns the cached current Unix time in nanoseconds.
 func (f *Time) UnixNanoNow() (now int64) {
 	return atomic.LoadInt64(&f.unt)
 }
 
-// UnixNanoNow returns current unix nano time.
+// UnixUNanoNow returns the cached current Unix time in nanoseconds as a uint32.
+// Note: This will overflow frequently (approximately every 4.29 seconds).
+// It is generally recommended to use UnixNanoNow for nanosecond precision.
 func (f *Time) UnixUNanoNow() (now uint32) {
 	return atomic.LoadUint32(&f.uunt)
 }
 
-// FormattedNow returns formatted byte time.
+// FormattedNow returns the cached current time formatted as a byte slice
+// according to the format string set by SetFormat or the default (time.RFC3339).
+// The formatted time is cached and only recomputed if the format or time changes.
 func (f *Time) FormattedNow() (now []byte) {
 	// only update formatted value on swap
 	if f.formatValid.CompareAndSwap(false, true) {
@@ -195,7 +219,12 @@ func (f *Time) FormattedNow() (now []byte) {
 	return *f.ft.Load()
 }
 
-// StartTimerD provides time refresh daemon.
+// StartTimerD starts a background goroutine (daemon) that periodically refreshes the cached time.
+// The refresh interval is specified by the 'dur' parameter.
+// If a daemon is already running, it is stopped and a new one is started.
+// The daemon will also stop if the provided context is cancelled.
+// It uses a ticker for regular updates and periodically corrects against the system clock
+// to mitigate drift. The correction interval is defined by `f.correctionDur`.
 func (f *Time) StartTimerD(ctx context.Context, dur time.Duration) (ft *Time) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
