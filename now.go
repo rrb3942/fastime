@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (f *FastTime) now() (now time.Time) {
+func (f *Time) now() (now time.Time) {
 	var timeValue syscall.Timeval
 	err := syscall.Gettimeofday(&timeValue)
 	loc := f.GetLocation()

@@ -8,7 +8,7 @@ import (
 
 var (
 	once    sync.Once
-	Default *FastTime
+	Default *Time
 )
 
 const (
@@ -34,12 +34,12 @@ func GetFormat() (form string) {
 }
 
 // SetLocation replaces time location.
-func SetLocation(location *time.Location) (ft *FastTime) {
+func SetLocation(location *time.Location) (ft *Time) {
 	return Default.SetLocation(location)
 }
 
 // SetFormat replaces time format.
-func SetFormat(format string) (ft *FastTime) {
+func SetFormat(format string) (ft *Time) {
 	return Default.SetFormat(format)
 }
 
@@ -85,6 +85,6 @@ func FormattedNow() (now []byte) {
 }
 
 // StartTimerD provides time refresh daemon.
-func StartTimerD(ctx context.Context, dur time.Duration) (ft *FastTime) {
+func StartTimerD(ctx context.Context, dur time.Duration) (ft *Time) {
 	return Default.StartTimerD(ctx, dur)
 }

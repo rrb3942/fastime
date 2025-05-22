@@ -293,7 +293,7 @@ func TestFastime_UnixUNanoNow(t *testing.T) {
 func TestFastime_refresh(t *testing.T) {
 	tests := []struct {
 		name string
-		f    *FastTime
+		f    *Time
 	}{
 		{
 			name: "refresh",
@@ -331,7 +331,7 @@ func TestSetFormat(t *testing.T) {
 func TestFastime_SetFormat(t *testing.T) {
 	tests := []struct {
 		name   string
-		f      *FastTime
+		f      *Time
 		format string
 	}{
 		{
@@ -367,7 +367,7 @@ func TestFormattedNow(t *testing.T) {
 func TestFastime_FormattedNow(t *testing.T) {
 	tests := []struct {
 		name string
-		f    *FastTime
+		f    *Time
 	}{
 		{
 			name: "fetch",
@@ -384,7 +384,7 @@ func TestFastime_FormattedNow(t *testing.T) {
 func TestFastime_now(t *testing.T) {
 	tests := []struct {
 		name string
-		f    *FastTime
+		f    *Time
 	}{
 		{
 			name: "now",
@@ -403,7 +403,7 @@ func TestFastime_now(t *testing.T) {
 func TestFastime_update(t *testing.T) {
 	tests := []struct {
 		name string
-		f    *FastTime
+		f    *Time
 	}{
 		{
 			name: "update",
@@ -422,7 +422,7 @@ func TestFastime_update(t *testing.T) {
 func TestFastime_store(t *testing.T) {
 	tests := []struct {
 		name string
-		f    *FastTime
+		f    *Time
 	}{
 		{
 			name: "store",

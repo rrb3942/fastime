@@ -5,6 +5,6 @@ package fastime
 
 import "time"
 
-func (f *FastTime) now() time.Time {
+func (f *Time) now() time.Time {
 	return time.Now().In(f.GetLocation())
 }
