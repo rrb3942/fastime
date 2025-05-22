@@ -94,9 +94,9 @@ func UnixUNanoNow() (now uint32) {
 	return Default.UnixUNanoNow()
 }
 
-// FormattedNow returns the cached current time formatted as a byte slice from the Default instance.
+// FormattedNow returns the cached current time formatted as a string from the Default instance.
 // See (*Time).FormattedNow for more details.
-func FormattedNow() (now []byte) {
+func FormattedNow() string {
 	return Default.FormattedNow()
 }
 

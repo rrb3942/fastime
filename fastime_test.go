@@ -359,7 +359,7 @@ func TestFormattedNow(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Log(string(FormattedNow()))
+			t.Log(FormattedNow())
 		})
 	}
 }
@@ -376,7 +376,7 @@ func TestFastime_FormattedNow(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Log(string(tt.f.FormattedNow()))
+			t.Log(tt.f.FormattedNow())
 		})
 	}
 }

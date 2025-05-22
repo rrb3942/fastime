@@ -19,7 +19,7 @@ import (
 type Time struct {
 	location      atomic.Pointer[time.Location] // Current time zone location.
 	format        atomic.Pointer[string]        // Current time format string.
-	ft            atomic.Pointer[[]byte]        // Cached formatted time as a byte slice.
+	ft            atomic.Pointer[string]        // Cached formatted time as a byte slice.
 	t             atomic.Pointer[time.Time]     // Cached time.Time object.
 	wg            sync.WaitGroup                // WaitGroup for managing the timer goroutine.
 	ut            atomic.Int64                  // Cached Unix time in seconds.
@@ -32,11 +32,6 @@ type Time struct {
 	formatValid   atomic.Bool                   // Flag indicating if the formatted time (ft) is valid.
 	uunt          atomic.Uint32                 // Cached Unix time in nanoseconds (uint32).
 }
-
-const (
-	bufSize   = 64 // Default buffer size for formatted time.
-	bufMargin = 10 // Margin for buffer size calculation.
-)
 
 // New creates and initializes a new Time instance.
 // It sets the initial time, default format (time.RFC3339), and location.
@@ -68,8 +63,8 @@ func New() (f *Time) {
 
 	f.location.Store(loc)
 
-	buf := f.newBuffer(len(form) + bufMargin)
-	f.ft.Store(&buf)
+	fmt := time.Now().Format(*f.format.Load())
+	f.ft.Store(&fmt)
 
 	return f.refresh()
 }
@@ -80,17 +75,6 @@ func (f *Time) update() (ft *Time) {
 
 func (f *Time) refresh() (ft *Time) {
 	return f.store(f.now())
-}
-
-func (f *Time) newBuffer(maxSize int) (b []byte) {
-	if maxSize < bufSize {
-		var buf [bufSize]byte
-		b = buf[:0]
-	} else {
-		b = make([]byte, 0, maxSize)
-	}
-
-	return b
 }
 
 func (f *Time) store(t time.Time) (ft *Time) {
@@ -207,12 +191,13 @@ func (f *Time) UnixUNanoNow() (now uint32) {
 // FormattedNow returns the cached current time formatted as a byte slice
 // according to the format string set by SetFormat or the default (time.RFC3339).
 // The formatted time is cached and only recomputed if the format or time changes.
-func (f *Time) FormattedNow() (now []byte) {
+func (f *Time) FormattedNow() string {
 	// only update formatted value on swap
 	if f.formatValid.CompareAndSwap(false, true) {
-		form := f.GetFormat()
-		buf := f.Now().AppendFormat(f.newBuffer(len(form)+bufMargin), form)
-		f.ft.Store(&buf)
+		fmt := time.Now().Format(*f.format.Load())
+		f.ft.Store(&fmt)
+
+		return fmt
 	}
 
 	return *f.ft.Load()

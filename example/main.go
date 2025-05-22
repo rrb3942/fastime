@@ -26,7 +26,7 @@ func main() {
 		fastime.Now().Unix(),
 		fastime.Now().Add(time.Second),
 		fastime.UnixNanoNow()+int64(time.Second),
-		string(fastime.FormattedNow()))
+		fastime.FormattedNow())
 
 	go func() {
 		time.Sleep(time.Second * 2)
