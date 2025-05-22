@@ -1,0 +1,16 @@
+repos:
+-   repo: https://github.com/tekwizely/pre-commit-golang
+    rev: v1.0.0-rc.1
+    hooks:
+    -   id: go-fmt
+    -   id: go-build-mod
+-   repo: https://github.com/golangci/golangci-lint
+    rev: v2.1.6
+    hooks:
+    -   id: golangci-lint
+        entry: golangci-lint run
+-   repo: https://github.com/adhtruong/mirrors-typos
+    rev: v1.32.0
+    hooks:
+    -   id: typos
+        exclude: '.golangci.yml'
