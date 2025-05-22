@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// BenchmarkFastime
+// BenchmarkFastime.
 func BenchmarkFastime(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -16,7 +16,7 @@ func BenchmarkFastime(b *testing.B) {
 	})
 }
 
-// BenchmarkTime
+// BenchmarkTime.
 func BenchmarkTime(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()

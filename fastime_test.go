@@ -18,8 +18,10 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := New().StartTimerD(context.Background(), 10000)
+			f := New().StartTimerD(t.Context(), 10000)
+
 			time.Sleep(time.Second * 2)
+
 			if (time.Now().Unix() - f.Now().Unix()) > 1000 {
 				t.Error("time is not correct so daemon is not started")
 			}
@@ -58,8 +60,10 @@ func TestStop(t *testing.T) {
 			if (time.Now().Unix() - now) > 1000 {
 				t.Error("time is not correct")
 			}
+
 			Stop()
 			time.Sleep(time.Second * 3)
+
 			now = Now().Unix()
 			if now == time.Now().Unix() {
 				t.Error("refresh daemon stopped but time is same")
@@ -78,18 +82,23 @@ func TestStartStop(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 			dur := 10 * time.Millisecond
+
 			f := New().StartTimerD(ctx, dur)
 			if !f.IsDaemonRunning() {
 				t.Error("daemon should be running")
 			}
+
 			for i := 0; i < 5; i++ {
 				f.StartTimerD(ctx, dur)
+
 				if !f.IsDaemonRunning() {
 					t.Error("daemon should be running")
 				}
+
 				f.Stop()
+
 				if f.IsDaemonRunning() {
 					t.Error("daemon should not be running")
 				}
@@ -102,6 +111,7 @@ func TestFastime_Now(t *testing.T) {
 	type fields struct {
 		cancel context.CancelFunc
 	}
+
 	tests := []struct {
 		name   string
 		fields fields
@@ -113,7 +123,7 @@ func TestFastime_Now(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := New().StartTimerD(context.Background(), 10000)
+			f := New().StartTimerD(t.Context(), 10000)
 			if f.Now().Unix() != time.Now().Unix() {
 				t.Error("time is not correct")
 			}
@@ -125,6 +135,7 @@ func TestFastime_Stop(t *testing.T) {
 	type fields struct {
 		cancel context.CancelFunc
 	}
+
 	tests := []struct {
 		name   string
 		fields fields
@@ -135,14 +146,17 @@ func TestFastime_Stop(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := New().StartTimerD(context.Background(), time.Nanosecond*5)
+			f := New().StartTimerD(t.Context(), time.Nanosecond*5)
 			time.Sleep(time.Second)
+
 			now := f.Now().Unix()
 			if (time.Now().Unix() - now) > 1000 {
 				t.Error("time is not correct")
 			}
+
 			f.Stop()
 			time.Sleep(time.Second * 3)
+
 			now = f.Now().Unix()
 			if now == time.Now().Unix() {
 				t.Error("refresh daemon stopped but time is same")
@@ -177,7 +191,8 @@ func TestFastime_UnixNow(t *testing.T) {
 		},
 	}
 
-	f := New().StartTimerD(context.Background(), time.Millisecond)
+	f := New().StartTimerD(t.Context(), time.Millisecond)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if f.UnixNow() != f.Now().Unix() {
@@ -213,7 +228,8 @@ func TestFastime_UnixUNow(t *testing.T) {
 		},
 	}
 
-	f := New().StartTimerD(context.Background(), time.Millisecond)
+	f := New().StartTimerD(t.Context(), time.Millisecond)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if f.UnixUNow() != uint32(f.Now().Unix()) {
@@ -232,7 +248,8 @@ func TestFastime_UnixNanoNow(t *testing.T) {
 		},
 	}
 
-	f := New().StartTimerD(context.Background(), time.Nanosecond)
+	f := New().StartTimerD(t.Context(), time.Nanosecond)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if f.UnixNanoNow() != f.Now().UnixNano() {
@@ -254,6 +271,7 @@ func TestUnixUNanoNow(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			exp := UnixUNanoNow()
 			act := uint32(Now().UnixNano())
+
 			if exp != act {
 				t.Errorf("time is not correct, exp: %v, actual: %v", exp, act)
 			}
@@ -270,11 +288,13 @@ func TestFastime_UnixUNanoNow(t *testing.T) {
 		},
 	}
 
-	f := New().StartTimerD(context.Background(), time.Nanosecond)
+	f := New().StartTimerD(t.Context(), time.Nanosecond)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			exp := f.UnixUNanoNow()
 			act := uint32(f.Now().UnixNano())
+
 			if exp != act {
 				t.Errorf("time is not correct, exp: %v, actual: %v", exp, act)
 			}
@@ -285,11 +305,11 @@ func TestFastime_UnixUNanoNow(t *testing.T) {
 func TestFastime_refresh(t *testing.T) {
 	tests := []struct {
 		name string
-		f    *fastime
+		f    *FastTime
 	}{
 		{
 			name: "refresh",
-			f:    newFastime(),
+			f:    New(),
 		},
 	}
 	for _, tt := range tests {
@@ -323,7 +343,7 @@ func TestSetFormat(t *testing.T) {
 func TestFastime_SetFormat(t *testing.T) {
 	tests := []struct {
 		name   string
-		f      Fastime
+		f      *FastTime
 		format string
 	}{
 		{
@@ -359,7 +379,7 @@ func TestFormattedNow(t *testing.T) {
 func TestFastime_FormattedNow(t *testing.T) {
 	tests := []struct {
 		name string
-		f    Fastime
+		f    *FastTime
 	}{
 		{
 			name: "fetch",
@@ -376,11 +396,11 @@ func TestFastime_FormattedNow(t *testing.T) {
 func TestFastime_now(t *testing.T) {
 	tests := []struct {
 		name string
-		f    *fastime
+		f    *FastTime
 	}{
 		{
 			name: "now",
-			f:    newFastime(),
+			f:    New(),
 		},
 	}
 	for _, tt := range tests {
@@ -395,11 +415,11 @@ func TestFastime_now(t *testing.T) {
 func TestFastime_update(t *testing.T) {
 	tests := []struct {
 		name string
-		f    *fastime
+		f    *FastTime
 	}{
 		{
 			name: "update",
-			f:    newFastime(),
+			f:    New(),
 		},
 	}
 	for _, tt := range tests {
@@ -414,11 +434,11 @@ func TestFastime_update(t *testing.T) {
 func TestFastime_store(t *testing.T) {
 	tests := []struct {
 		name string
-		f    *fastime
+		f    *FastTime
 	}{
 		{
 			name: "store",
-			f:    newFastime(),
+			f:    New(),
 		},
 	}
 	for _, tt := range tests {
@@ -441,15 +461,18 @@ func TestFastime_Since(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := New().StartTimerD(context.Background(), time.Millisecond*5)
+			f := New().StartTimerD(t.Context(), time.Millisecond*5)
 			now := f.Now()
 			timeNow := time.Now()
 			time.Sleep(time.Second)
+
 			since1 := f.Since(now)
 			since2 := time.Since(timeNow)
+
 			if since1 < 50*time.Millisecond {
 				t.Errorf("since is not correct.\tfastime.Now: %v,\ttime.Now: %v\tsince1: %d, \tsince2: %d", now.UnixNano(), timeNow.UnixNano(), since1, since2)
 			}
+
 			if math.Abs(float64(since1-since2)) > float64(50*time.Millisecond) {
 				t.Errorf("since error too large.\tfastime.Now: %v,\ttime.Now: %v\tsince1: %d, \tsince2: %d", now.UnixNano(), timeNow.UnixNano(), since1, since2)
 			}

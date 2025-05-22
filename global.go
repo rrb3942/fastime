@@ -8,7 +8,7 @@ import (
 
 var (
 	once     sync.Once
-	instance Fastime
+	instance *FastTime
 )
 
 func init() {
@@ -29,17 +29,17 @@ func GetFormat() (form string) {
 	return instance.GetFormat()
 }
 
-// SetLocation replaces time location
-func SetLocation(location *time.Location) (ft Fastime) {
+// SetLocation replaces time location.
+func SetLocation(location *time.Location) (ft *FastTime) {
 	return instance.SetLocation(location)
 }
 
-// SetFormat replaces time format
-func SetFormat(format string) (ft Fastime) {
+// SetFormat replaces time format.
+func SetFormat(format string) (ft *FastTime) {
 	return instance.SetFormat(format)
 }
 
-// Now returns current time
+// Now returns current time.
 func Now() (now time.Time) {
 	return instance.Now()
 }
@@ -50,37 +50,37 @@ func Since(t time.Time) (dur time.Duration) {
 	return instance.Since(t)
 }
 
-// Stop stops stopping time refresh daemon
+// Stop stops stopping time refresh daemon.
 func Stop() {
 	instance.Stop()
 }
 
-// UnixNow returns current unix time
+// UnixNow returns current unix time.
 func UnixNow() (now int64) {
 	return instance.UnixNow()
 }
 
-// UnixUNow returns current unix time
+// UnixUNow returns current unix time.
 func UnixUNow() (now uint32) {
 	return instance.UnixUNow()
 }
 
-// UnixNanoNow returns current unix nano time
+// UnixNanoNow returns current unix nano time.
 func UnixNanoNow() (now int64) {
 	return instance.UnixNanoNow()
 }
 
-// UnixUNanoNow returns current unix nano time
+// UnixUNanoNow returns current unix nano time.
 func UnixUNanoNow() (now uint32) {
 	return instance.UnixUNanoNow()
 }
 
-// FormattedNow returns formatted byte time
+// FormattedNow returns formatted byte time.
 func FormattedNow() (now []byte) {
 	return instance.FormattedNow()
 }
 
-// StartTimerD provides time refresh daemon
-func StartTimerD(ctx context.Context, dur time.Duration) (ft Fastime) {
+// StartTimerD provides time refresh daemon.
+func StartTimerD(ctx context.Context, dur time.Duration) (ft *FastTime) {
 	return instance.StartTimerD(ctx, dur)
 }
