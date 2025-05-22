@@ -26,3 +26,13 @@ func BenchmarkTime(b *testing.B) {
 		}
 	})
 }
+
+func BenchmarkFastimeNow(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			Default.now()
+		}
+	})
+}
