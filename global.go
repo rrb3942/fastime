@@ -7,80 +7,84 @@ import (
 )
 
 var (
-	once     sync.Once
-	instance *FastTime
+	once    sync.Once
+	Default *FastTime
+)
+
+const (
+	defaultRefreshDuration = time.Millisecond * 5
 )
 
 func init() {
 	once.Do(func() {
-		instance = New().StartTimerD(context.Background(), time.Millisecond*5)
+		Default = New().StartTimerD(context.Background(), defaultRefreshDuration)
 	})
 }
 
 func IsDaemonRunning() (running bool) {
-	return instance.IsDaemonRunning()
+	return Default.IsDaemonRunning()
 }
 
 func GetLocation() (loc *time.Location) {
-	return instance.GetLocation()
+	return Default.GetLocation()
 }
 
 func GetFormat() (form string) {
-	return instance.GetFormat()
+	return Default.GetFormat()
 }
 
 // SetLocation replaces time location.
 func SetLocation(location *time.Location) (ft *FastTime) {
-	return instance.SetLocation(location)
+	return Default.SetLocation(location)
 }
 
 // SetFormat replaces time format.
 func SetFormat(format string) (ft *FastTime) {
-	return instance.SetFormat(format)
+	return Default.SetFormat(format)
 }
 
 // Now returns current time.
 func Now() (now time.Time) {
-	return instance.Now()
+	return Default.Now()
 }
 
 // Since returns the time elapsed since t.
 // It is shorthand for fastime.Now().Sub(t).
 func Since(t time.Time) (dur time.Duration) {
-	return instance.Since(t)
+	return Default.Since(t)
 }
 
 // Stop stops stopping time refresh daemon.
 func Stop() {
-	instance.Stop()
+	Default.Stop()
 }
 
 // UnixNow returns current unix time.
 func UnixNow() (now int64) {
-	return instance.UnixNow()
+	return Default.UnixNow()
 }
 
 // UnixUNow returns current unix time.
 func UnixUNow() (now uint32) {
-	return instance.UnixUNow()
+	return Default.UnixUNow()
 }
 
 // UnixNanoNow returns current unix nano time.
 func UnixNanoNow() (now int64) {
-	return instance.UnixNanoNow()
+	return Default.UnixNanoNow()
 }
 
 // UnixUNanoNow returns current unix nano time.
 func UnixUNanoNow() (now uint32) {
-	return instance.UnixUNanoNow()
+	return Default.UnixUNanoNow()
 }
 
 // FormattedNow returns formatted byte time.
 func FormattedNow() (now []byte) {
-	return instance.FormattedNow()
+	return Default.FormattedNow()
 }
 
 // StartTimerD provides time refresh daemon.
 func StartTimerD(ctx context.Context, dur time.Duration) (ft *FastTime) {
-	return instance.StartTimerD(ctx, dur)
+	return Default.StartTimerD(ctx, dur)
 }
