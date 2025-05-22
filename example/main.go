@@ -1,3 +1,4 @@
+//nolint:mnd // Ignore for example
 package main
 
 import (
